@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { DashboardScreenProps } from '../types/navigation';
+import { useAuth } from '../context/AuthContext';
 
 export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
+  const { logout } = useAuth();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dashboard Screen</Text>
@@ -14,7 +17,7 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
       <Button 
         title="Logout" 
         color="#e53935"
-        onPress={() => navigation.replace('Login')} 
+        onPress={async () => await logout()} 
       />
     </View>
   );

@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platfor
 import { LoginScreenProps } from '../types/navigation';
 import { Input } from '../components/Input';
 import { isValidEmail, isValidPassword } from '../utils/validation';
+import { useAuth } from '../context/AuthContext';
 
 export const LoginScreen = ({ navigation }: LoginScreenProps) => {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -12,7 +14,6 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
-    // Check overall form validity
     setIsValid(
       email.length > 0 && isValidEmail(email) && 
       password.length > 0 && isValidPassword(password)
@@ -37,10 +38,9 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (isValid) {
-      // Proceed to dashboard on successful login simulation
-      navigation.replace('Dashboard');
+      await login();
     }
   };
 
