@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { StatisticsScreen } from '../screens/StatisticsScreen';
+import { TaskFormScreen } from '../screens/TaskFormScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -36,6 +37,11 @@ export const AppNavigator = () => {
               name="Statistics" 
               component={StatisticsScreen} 
               options={{ title: 'Task Statistics' }} 
+            />
+            <Stack.Screen
+              name="TaskForm"
+              component={TaskFormScreen}
+              options={({ route }) => ({ title: route.params?.taskId ? 'Edit Task' : 'New Task' })}
             />
           </Stack.Group>
         ) : (
