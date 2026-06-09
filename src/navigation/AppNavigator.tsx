@@ -2,15 +2,14 @@ import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { AppStackParamList } from '../types/navigation';
 import { useAuth } from '../context/AuthContext';
 
-import { LoginScreen } from '../screens/LoginScreen';
-import { DashboardScreen } from '../screens/DashboardScreen';
-import { StatisticsScreen } from '../screens/StatisticsScreen';
+import { AuthNavigator } from './AuthNavigator';
+import { MainTabNavigator } from './MainTabNavigator';
 import { TaskFormScreen } from '../screens/TaskFormScreen';
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<AppStackParamList>();
 
 export const AppNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -25,33 +24,25 @@ export const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        {isAuthenticated ? (
-          <Stack.Group>
-            <Stack.Screen 
-              name="Dashboard" 
-              component={DashboardScreen} 
-              options={{ title: 'Task Dashboard' }} 
-            />
-            <Stack.Screen 
-              name="Statistics" 
-              component={StatisticsScreen} 
-              options={{ title: 'Task Statistics' }} 
-            />
-            <Stack.Screen
-              name="TaskForm"
-              component={TaskFormScreen}
-              options={({ route }) => ({ title: route.params?.taskId ? 'Edit Task' : 'New Task' })}
-            />
-          </Stack.Group>
-        ) : (
+      {isAuthenticated ? (
+        <Stack.Navigator>
           <Stack.Screen 
-            name="Login" 
-            component={LoginScreen} 
+            name="MainTabs" 
+            component={MainTabNavigator} 
             options={{ headerShown: false }} 
           />
-        )}
-      </Stack.Navigator>
+          <Stack.Screen
+            name="TaskForm"
+            component={TaskFormScreen}
+            options={({ route }) => ({ 
+              title: route.params?.taskId ? 'Edit Task' : 'New Task',
+              presentation: 'modal'
+            })}
+          />
+        </Stack.Navigator>
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 };

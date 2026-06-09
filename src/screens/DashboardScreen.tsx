@@ -29,16 +29,7 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
     resetFilters,
   } = useTaskFilter(tasks);
 
-  // Place the logout button in the top right header
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, logout]);
+
 
   // Use useCallback to prevent unnecessary re-renders of list items
   const renderTask = useCallback(({ item }: { item: Task }) => (
@@ -159,12 +150,5 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginTop: -2,
   },
-  logoutButton: {
-    paddingRight: 16,
-  },
-  logoutText: {
-    color: '#ef4444',
-    fontWeight: '600',
-    fontSize: 16,
-  },
+
 });
