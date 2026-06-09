@@ -5,6 +5,7 @@ import { TaskStorage } from '../services/TaskStorage';
 const initialState: TaskState = {
   tasks: [],
   isLoadingTasks: true,
+  error: null,
 };
 
 const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
@@ -14,16 +15,24 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
         ...state,
         tasks: action.payload,
         isLoadingTasks: false,
+        error: null,
       };
     case 'SET_LOADING':
       return {
         ...state,
         isLoadingTasks: action.payload,
       };
+    case 'SET_ERROR':
+      return {
+        ...state,
+        error: action.payload,
+        isLoadingTasks: false,
+      };
     case 'ADD_TASK':
       return {
         ...state,
         tasks: [...state.tasks, action.payload],
+        error: null,
       };
     case 'UPDATE_TASK':
       return {
@@ -31,11 +40,13 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
         tasks: state.tasks.map((task) =>
           task.id === action.payload.id ? action.payload : task
         ),
+        error: null,
       };
     case 'DELETE_TASK':
       return {
         ...state,
         tasks: state.tasks.filter((task) => task.id !== action.payload),
+        error: null,
       };
     case 'TOGGLE_TASK_COMPLETION':
       return {
@@ -45,6 +56,7 @@ const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
             ? { ...task, status: task.status === 'Pending' ? 'Completed' : 'Pending' }
             : task
         ),
+        error: null,
       };
     default:
       return state;
@@ -56,6 +68,8 @@ interface TaskContextType extends TaskState {
   updateTask: (task: Task) => void;
   deleteTask: (id: string) => void;
   toggleTaskCompletion: (id: string) => void;
+  refreshTasks: () => Promise<void>;
+  clearError: () => void;
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
@@ -64,12 +78,20 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load tasks from storage on startup
-  useEffect(() => {
-    const init = async () => {
+  const loadTasksFromStorage = async () => {
+    try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const storedTasks = await TaskStorage.loadTasks();
       dispatch({ type: 'SET_TASKS', payload: storedTasks });
+    } catch (err: any) {
+      dispatch({ type: 'SET_ERROR', payload: err.message || 'Failed to load tasks' });
+    }
+  };
+
+  // Load tasks from storage on startup
+  useEffect(() => {
+    const init = async () => {
+      await loadTasksFromStorage();
       setIsInitialized(true);
     };
     init();
@@ -77,10 +99,25 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
 
   // Save tasks to storage automatically whenever they change
   useEffect(() => {
-    if (isInitialized) {
-      TaskStorage.saveTasks(state.tasks);
-    }
+    const saveTasksToStorage = async () => {
+      if (isInitialized) {
+        try {
+          await TaskStorage.saveTasks(state.tasks);
+        } catch (err: any) {
+          dispatch({ type: 'SET_ERROR', payload: err.message || 'Failed to save tasks' });
+        }
+      }
+    };
+    saveTasksToStorage();
   }, [state.tasks, isInitialized]);
+
+  const refreshTasks = async () => {
+    await loadTasksFromStorage();
+  };
+
+  const clearError = () => {
+    dispatch({ type: 'SET_ERROR', payload: null });
+  };
 
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'status'>) => {
     const newTask: Task = {
@@ -107,12 +144,13 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
   return (
     <TaskContext.Provider
       value={{
-        tasks: state.tasks,
-        isLoadingTasks: state.isLoadingTasks,
+        ...state,
         addTask,
         updateTask,
         deleteTask,
         toggleTaskCompletion,
+        refreshTasks,
+        clearError,
       }}
     >
       {children}

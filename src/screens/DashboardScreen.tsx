@@ -1,18 +1,18 @@
-import React, { useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, FlatList, TouchableOpacity, Text, ActivityIndicator, RefreshControl } from 'react-native';
 import { DashboardScreenProps } from '../types/navigation';
 import { useTask } from '../context/TaskContext';
-import { useAuth } from '../context/AuthContext';
 import { TaskCard } from '../components/TaskCard';
 import { EmptyState } from '../components/EmptyState';
 import { Task } from '../types/task';
 import { SearchBar } from '../components/SearchBar';
 import { FilterBar } from '../components/FilterBar';
+import { ErrorMessage } from '../components/ErrorMessage';
 import { useTaskFilter } from '../hooks/useTaskFilter';
 
 export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
-  const { tasks, toggleTaskCompletion, deleteTask, isLoadingTasks } = useTask();
-  const { logout } = useAuth();
+  const { tasks, toggleTaskCompletion, deleteTask, isLoadingTasks, error, refreshTasks } = useTask();
+  const [refreshing, setRefreshing] = useState(false);
   
   // Apply our custom filtering hook
   const {
@@ -29,7 +29,11 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
     resetFilters,
   } = useTaskFilter(tasks);
 
-
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshTasks();
+    setRefreshing(false);
+  }, [refreshTasks]);
 
   // Use useCallback to prevent unnecessary re-renders of list items
   const renderTask = useCallback(({ item }: { item: Task }) => (
@@ -44,10 +48,11 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
   // Stable key extractor
   const keyExtractor = useCallback((item: Task) => item.id, []);
 
-  if (isLoadingTasks) {
+  if (isLoadingTasks && !refreshing) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#2563eb" />
+        <Text style={styles.loadingText}>Loading tasks...</Text>
       </View>
     );
   }
@@ -73,12 +78,27 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
         onReset={resetFilters}
       />
 
+      {error ? (
+        <View style={styles.errorWrapper}>
+          <ErrorMessage message={error} />
+        </View>
+      ) : null}
+
       <FlatList
         data={filteredTasks}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={renderTask}
+        // Pull-to-refresh
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh} 
+            colors={['#2563eb']} 
+            tintColor="#2563eb"
+          />
+        }
         // FlatList Performance Optimizations
         initialNumToRender={10}
         maxToRenderPerBatch={10}
@@ -118,11 +138,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
   },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
   searchContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 4,
     backgroundColor: '#f3f4f6',
+  },
+  errorWrapper: {
+    paddingHorizontal: 16,
   },
   listContent: {
     padding: 16,
@@ -150,5 +179,4 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginTop: -2,
   },
-
 });

@@ -11,6 +11,7 @@ export interface Task {
 export interface TaskState {
   tasks: Task[];
   isLoadingTasks: boolean;
+  error: string | null;
 }
 
 export type TaskAction =
@@ -19,4 +20,5 @@ export type TaskAction =
   | { type: 'UPDATE_TASK'; payload: Task }
   | { type: 'DELETE_TASK'; payload: string }
   | { type: 'TOGGLE_TASK_COMPLETION'; payload: string }
-  | { type: 'SET_LOADING'; payload: boolean };
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null };
