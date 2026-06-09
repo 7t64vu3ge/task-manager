@@ -1,12 +1,25 @@
-import React, { createContext, useReducer, ReactNode, useContext } from 'react';
+import React, { createContext, useReducer, ReactNode, useContext, useEffect, useState } from 'react';
 import { Task, TaskState, TaskAction } from '../types/task';
+import { TaskStorage } from '../services/TaskStorage';
 
 const initialState: TaskState = {
   tasks: [],
+  isLoadingTasks: true,
 };
 
 const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
   switch (action.type) {
+    case 'SET_TASKS':
+      return {
+        ...state,
+        tasks: action.payload,
+        isLoadingTasks: false,
+      };
+    case 'SET_LOADING':
+      return {
+        ...state,
+        isLoadingTasks: action.payload,
+      };
     case 'ADD_TASK':
       return {
         ...state,
@@ -49,6 +62,25 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
 export const TaskProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(taskReducer, initialState);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load tasks from storage on startup
+  useEffect(() => {
+    const init = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const storedTasks = await TaskStorage.loadTasks();
+      dispatch({ type: 'SET_TASKS', payload: storedTasks });
+      setIsInitialized(true);
+    };
+    init();
+  }, []);
+
+  // Save tasks to storage automatically whenever they change
+  useEffect(() => {
+    if (isInitialized) {
+      TaskStorage.saveTasks(state.tasks);
+    }
+  }, [state.tasks, isInitialized]);
 
   const addTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'status'>) => {
     const newTask: Task = {
@@ -76,6 +108,7 @@ export const TaskProvider = ({ children }: { children: ReactNode }) => {
     <TaskContext.Provider
       value={{
         tasks: state.tasks,
+        isLoadingTasks: state.isLoadingTasks,
         addTask,
         updateTask,
         deleteTask,
