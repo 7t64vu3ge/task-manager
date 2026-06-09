@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { DashboardScreenProps } from '../types/navigation';
 import { useTask } from '../context/TaskContext';
@@ -6,19 +6,28 @@ import { useAuth } from '../context/AuthContext';
 import { TaskCard } from '../components/TaskCard';
 import { EmptyState } from '../components/EmptyState';
 import { Task } from '../types/task';
+import { SearchBar } from '../components/SearchBar';
+import { FilterBar } from '../components/FilterBar';
+import { useTaskFilter } from '../hooks/useTaskFilter';
 
 export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
-  const { tasks, toggleTaskCompletion, deleteTask } = useTask();
+  const { tasks, toggleTaskCompletion, deleteTask, isLoadingTasks } = useTask();
   const { logout } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulate loading state for smooth UI transition
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, []);
+  
+  // Apply our custom filtering hook
+  const {
+    searchQuery,
+    statusFilter,
+    priorityFilter,
+    sortOrder,
+    filteredTasks,
+    hasActiveFilters,
+    setSearchQuery,
+    setStatusFilter,
+    setPriorityFilter,
+    setSortOrder,
+    resetFilters,
+  } = useTaskFilter(tasks);
 
   // Place the logout button in the top right header
   useEffect(() => {
@@ -44,7 +53,7 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
   // Stable key extractor
   const keyExtractor = useCallback((item: Task) => item.id, []);
 
-  if (isLoading) {
+  if (isLoadingTasks) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#2563eb" />
@@ -54,8 +63,27 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <SearchBar 
+          value={searchQuery} 
+          onChangeText={setSearchQuery} 
+          placeholder="Search tasks by title..." 
+        />
+      </View>
+      
+      <FilterBar
+        statusFilter={statusFilter}
+        priorityFilter={priorityFilter}
+        sortOrder={sortOrder}
+        hasActiveFilters={hasActiveFilters}
+        onStatusChange={setStatusFilter}
+        onPriorityChange={setPriorityFilter}
+        onSortChange={setSortOrder}
+        onReset={resetFilters}
+      />
+
       <FlatList
-        data={tasks}
+        data={filteredTasks}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -67,8 +95,12 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
         removeClippedSubviews={true}
         ListEmptyComponent={
           <EmptyState 
-            title="No tasks yet" 
-            message="Tap the + button below to create your first task and get organized!" 
+            title={hasActiveFilters ? "No matching tasks" : "No tasks yet"} 
+            message={
+              hasActiveFilters 
+                ? "Try adjusting your filters or search query." 
+                : "Tap the + button below to create your first task and get organized!"
+            } 
           />
         }
       />
@@ -93,6 +125,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f3f4f6',
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
     backgroundColor: '#f3f4f6',
   },
   listContent: {
