@@ -53,7 +53,6 @@ export const SignupScreen = ({ navigation }: SignupScreenProps) => {
     } else {
       setPasswordError('');
     }
-    // Re-validate confirm if already filled in
     if (confirmPassword.length > 0) {
       setConfirmPasswordError(
         text === confirmPassword ? '' : 'Passwords do not match.'
@@ -72,7 +71,6 @@ export const SignupScreen = ({ navigation }: SignupScreenProps) => {
   };
 
   const handleSignup = async () => {
-    // Run all validations before submit
     const nameOk = isValidFullName(fullName);
     const emailOk = isValidEmail(email);
     const passOk = isValidPassword(password);

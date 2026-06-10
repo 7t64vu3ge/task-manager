@@ -14,7 +14,6 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
   const { tasks, toggleTaskCompletion, deleteTask, isLoadingTasks, error, refreshTasks } = useTask();
   const [refreshing, setRefreshing] = useState(false);
   
-  // Apply our custom filtering hook
   const {
     searchQuery,
     statusFilter,
@@ -35,7 +34,6 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
     setRefreshing(false);
   }, [refreshTasks]);
 
-  // Use useCallback to prevent unnecessary re-renders of list items
   const renderTask = useCallback(({ item }: { item: Task }) => (
     <TaskCard 
       task={item} 
@@ -45,7 +43,6 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
     />
   ), [toggleTaskCompletion, deleteTask, navigation]);
 
-  // Stable key extractor
   const keyExtractor = useCallback((item: Task) => item.id, []);
 
   if (isLoadingTasks && !refreshing) {
@@ -90,7 +87,6 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         renderItem={renderTask}
-        // Pull-to-refresh
         refreshControl={
           <RefreshControl 
             refreshing={refreshing} 
@@ -99,7 +95,6 @@ export const DashboardScreen = ({ navigation }: DashboardScreenProps) => {
             tintColor="#2563eb"
           />
         }
-        // FlatList Performance Optimizations
         initialNumToRender={10}
         maxToRenderPerBatch={10}
         windowSize={5}
@@ -155,7 +150,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100, // Extra padding so FAB doesn't cover last item
+    paddingBottom: 100,
   },
   fab: {
     position: 'absolute',

@@ -5,7 +5,6 @@ import { useTask } from '../context/TaskContext';
 import { StatCard } from '../components/StatCard';
 import { EmptyState } from '../components/EmptyState';
 
-// Crisp, scalable SVG Icons
 const ClipboardIcon = ({ color }: { color: string }) => (
   <Svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
@@ -38,21 +37,17 @@ const AlertCircleIcon = ({ color }: { color: string }) => (
 export const StatisticsScreen = () => {
   const { tasks } = useTask();
 
-  // Efficiently compute metrics
   const stats = useMemo(() => {
     const total = tasks.length;
     const completed = tasks.filter((t) => t.status === 'Completed').length;
     const pending = total - completed;
-    // Highlight "High Priority" tasks that still need attention
     const highPriority = tasks.filter((t) => t.priority === 'High' && t.status === 'Pending').length;
     
-    // Calculate a visual completion percentage
     const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return { total, completed, pending, highPriority, completionRate };
   }, [tasks]);
 
-  // Handle empty state exactly as requested
   if (tasks.length === 0) {
     return (
       <View style={styles.emptyContainer}>
@@ -71,7 +66,6 @@ export const StatisticsScreen = () => {
         <Text style={styles.headerSubtitle}>Track your productivity</Text>
       </View>
 
-      {/* Progress Bar built with Vanilla UI blocks instead of a chart library */}
       <View style={styles.progressSection}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressTitle}>Completion Rate</Text>

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Task } from '../types/task';
+import { semanticFilter } from '../utils/semanticSearch';
 
 export type StatusFilter = 'All' | 'Pending' | 'Completed';
 export type PriorityFilter = 'All' | 'High' | 'Medium' | 'Low';
@@ -21,25 +22,18 @@ export const useTaskFilter = (tasks: Task[]) => {
   const filteredTasks = useMemo(() => {
     let result = [...tasks];
 
-    // 1. Search by title (case-insensitive)
     if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase();
-      result = result.filter((task) =>
-        task.title.toLowerCase().includes(query)
-      );
+      result = semanticFilter(result, searchQuery.trim());
     }
 
-    // 2. Filter by status
     if (statusFilter !== 'All') {
       result = result.filter((task) => task.status === statusFilter);
     }
 
-    // 3. Filter by priority
     if (priorityFilter !== 'All') {
       result = result.filter((task) => task.priority === priorityFilter);
     }
 
-    // 4. Sort by due date
     result.sort((a, b) => {
       const dateA = new Date(a.dueDate).getTime();
       const dateB = new Date(b.dueDate).getTime();
@@ -63,15 +57,12 @@ export const useTaskFilter = (tasks: Task[]) => {
     sortOrder !== 'earliest';
 
   return {
-    // State
     searchQuery,
     statusFilter,
     priorityFilter,
     sortOrder,
-    // Derived
     filteredTasks,
     hasActiveFilters,
-    // Setters
     setSearchQuery,
     setStatusFilter,
     setPriorityFilter,
