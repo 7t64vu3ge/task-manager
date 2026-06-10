@@ -9,20 +9,31 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { LoginScreenProps } from '../types/navigation';
+import { SignupScreenProps } from '../types/navigation';
 import { Input } from '../components/Input';
 import { ErrorMessage } from '../components/ErrorMessage';
-import { isValidEmail, isValidPassword } from '../utils/validation';
+import { isValidEmail, isValidPassword, isValidFullName } from '../utils/validation';
 import { useAuth } from '../context/AuthContext';
 
-export const LoginScreen = ({ navigation }: LoginScreenProps) => {
-  const { login, isLoading } = useAuth();
+export const SignupScreen = ({ navigation }: SignupScreenProps) => {
+  const { signup, isLoading } = useAuth();
 
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [fullNameError, setFullNameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [globalError, setGlobalError] = useState('');
+
+  const handleFullNameChange = (text: string) => {
+    setFullName(text);
+    setGlobalError('');
+    setFullNameError(isValidFullName(text) ? '' : 'Full name is required.');
+  };
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
@@ -42,26 +53,54 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
     } else {
       setPasswordError('');
     }
+    // Re-validate confirm if already filled in
+    if (confirmPassword.length > 0) {
+      setConfirmPasswordError(
+        text === confirmPassword ? '' : 'Passwords do not match.'
+      );
+    }
   };
 
-  const handleLogin = async () => {
-    const isFormValid =
-      isValidEmail(email) && isValidPassword(password);
-
-    if (!isFormValid) {
-      if (!isValidEmail(email)) setEmailError('Please enter a valid email address.');
-      if (!isValidPassword(password)) setPasswordError('Password must be at least 6 characters.');
-      return;
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    setGlobalError('');
+    if (text.length > 0 && text !== password) {
+      setConfirmPasswordError('Passwords do not match.');
+    } else {
+      setConfirmPasswordError('');
     }
+  };
 
-    const error = await login(email, password);
+  const handleSignup = async () => {
+    // Run all validations before submit
+    const nameOk = isValidFullName(fullName);
+    const emailOk = isValidEmail(email);
+    const passOk = isValidPassword(password);
+    const confirmOk = password === confirmPassword;
+
+    if (!nameOk) setFullNameError('Full name is required.');
+    if (!emailOk) setEmailError('Please enter a valid email address.');
+    if (!passOk) setPasswordError('Password must be at least 6 characters.');
+    if (!confirmOk) setConfirmPasswordError('Passwords do not match.');
+
+    if (!nameOk || !emailOk || !passOk || !confirmOk) return;
+
+    const error = await signup(fullName, email, password);
     if (error) {
       setGlobalError(error);
     }
   };
 
   const isSubmitDisabled =
-    !email || !password || !!emailError || !!passwordError || isLoading;
+    !fullName ||
+    !email ||
+    !password ||
+    !confirmPassword ||
+    !!fullNameError ||
+    !!emailError ||
+    !!passwordError ||
+    !!confirmPasswordError ||
+    isLoading;
 
   return (
     <KeyboardAvoidingView
@@ -73,10 +112,20 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.formContainer}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
 
           {globalError ? <ErrorMessage message={globalError} /> : null}
+
+          <Input
+            label="Full Name"
+            placeholder="Enter your full name"
+            value={fullName}
+            onChangeText={handleFullNameChange}
+            autoCapitalize="words"
+            autoCorrect={false}
+            error={fullNameError}
+          />
 
           <Input
             label="Email"
@@ -91,32 +140,41 @@ export const LoginScreen = ({ navigation }: LoginScreenProps) => {
 
           <Input
             label="Password"
-            placeholder="Enter your password"
+            placeholder="At least 6 characters"
             value={password}
             onChangeText={handlePasswordChange}
             secureTextEntry
             error={passwordError}
           />
 
+          <Input
+            label="Confirm Password"
+            placeholder="Re-enter your password"
+            value={confirmPassword}
+            onChangeText={handleConfirmPasswordChange}
+            secureTextEntry
+            error={confirmPasswordError}
+          />
+
           <TouchableOpacity
             style={[styles.button, isSubmitDisabled && styles.buttonDisabled]}
-            onPress={handleLogin}
+            onPress={handleSignup}
             disabled={isSubmitDisabled}
           >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Login</Text>
+              <Text style={styles.buttonText}>Create Account</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.linkContainer}
-            onPress={() => navigation.navigate('Signup')}
+            onPress={() => navigation.navigate('Login')}
           >
             <Text style={styles.linkText}>
-              Don't have an account?{' '}
-              <Text style={styles.linkBold}>Sign Up</Text>
+              Already have an account?{' '}
+              <Text style={styles.linkBold}>Log In</Text>
             </Text>
           </TouchableOpacity>
         </View>

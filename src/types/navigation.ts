@@ -4,6 +4,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 export type AuthStackParamList = {
   Login: undefined;
+  Signup: undefined;
 };
 
 export type MainTabParamList = {
@@ -17,6 +18,7 @@ export type AppStackParamList = {
 };
 
 export type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+export type SignupScreenProps = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
 
 export type DashboardScreenProps = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'Dashboard'>,

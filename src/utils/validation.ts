@@ -4,5 +4,9 @@ export const isValidEmail = (email: string): boolean => {
 };
 
 export const isValidPassword = (password: string): boolean => {
-  return password.trim().length > 0;
+  return password.length >= 6;
+};
+
+export const isValidFullName = (name: string): boolean => {
+  return name.trim().length > 0;
 };
